@@ -62,8 +62,8 @@ serverPort.set_text("135")
 # Set default Syncronization Type
 syncTypeModel = Gtk.ListStore(str)          # List of all sync types
 syncTypeModel.append(["Basic"])
-syncTypeModel.append(["Lamport"])
-syncTypeModel.append(["Berkeley"])
+syncTypeModel.append(["Christian"])
+syncTypeModel.append(["NTP"])
 
 syncType = builder.get_object("syncType")   # Get reference of ComboBox
 cell = Gtk.CellRendererText()               # Create a Cell structure
@@ -89,11 +89,11 @@ def on_syncType_changed(self):
 
   if syncType.get_active() == 1:
       serverPort.set_text("1801 (UDP)")
-      description.set_text("Better for intranet with constant latency.")
+      description.set_text("Better for intranet low latency.")
 
   if syncType.get_active() == 2:
       serverPort.set_text("1801 (UDP)")
-      description.set_text("Better for online request with inconstant latency.")
+      description.set_text("Better for online request with inconstant and high latency.")
 syncType.connect("changed", on_syncType_changed)
 syncType.set_active(0) # HARD_FIX
 
