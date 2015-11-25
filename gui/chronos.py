@@ -4,6 +4,8 @@ from gi.repository import Gtk
 import sys
 import os
 import subprocess
+import time
+import thread
 
 
 
@@ -59,7 +61,7 @@ serverPort    = builder.get_object("serverPort")
 serverPort.set_text("135")
 
 
-# Set default Syncronization Type
+# Set default Synchronization Type
 syncTypeModel = Gtk.ListStore(str)          # List of all sync types
 syncTypeModel.append(["Basic"])
 syncTypeModel.append(["Christian"])
@@ -76,6 +78,36 @@ syncType.set_active(1)                      # Set first element as active option
 
 # Events
 # =========================================================
+
+
+
+# Test connection
+# ================================
+def testConnection (out=1):
+  hostname = builder.get_object("serverAddress").get_text() # Getting hostname from GUI field
+  response = os.system("ping -W 2 -c 1 "+hostname)    # Test ping from bash output
+  if response == 0:
+    if out==1:
+      builder.get_object("out").set_text("Server '"+hostname+"' is up!")
+    return 0
+  else:
+    if out==1:
+      builder.get_object("out").set_text("Server '"+hostname+"' is down!")
+    return 1
+def on_btnTest_clicked (self):
+  testConnection ()
+builder.get_object("btnTest").connect("clicked", on_btnTest_clicked) # Set click event
+  
+
+
+# Keep Sync NOT_IMPLEMENTED!
+# ================================
+builder.get_object("btnKeepSync").hide()
+
+# Log NOT_IMPLEMENTED!
+# ================================
+builder.get_object("btnLog").hide()
+
 
 # Get Sync Type when changed
 # ================================
@@ -99,50 +131,62 @@ syncType.set_active(0) # HARD_FIX
 
 
 
-# Syncronization
+# Synchronization
 # ================================
 def sync_time():
-  # Get sync method ID to be used
-  syncMethod  = str(syncType.get_active())
+  # OUT message
+  builder.get_object("out").set_text("Synchronizing...")
 
-  # Generating command
-  command = str('../dist/client '+str(serverAddress.get_text())+' '+str(syncMethod))
 
-  # DEBUG command
-  print("TRY: "+command)
+  # Sync Server Request
+  # =======================
+  def sync_request(a=0,b=0):
+    # Test connection
+    if testConnection() == 1:
+      return 1
 
-  # Run command and save log
-  instantLog =  subprocess.check_output(command, shell=True)
-  os.system(instantLog+" >> server.log")
+    # Get sync method ID to be used
+    syncMethod  = str(syncType.get_active())
 
-  # GUI datetime output
-  out = builder.get_object("out")
-  out.set_text("Date and Time: "+instantLog.replace('\n', ''))                          
+    # Generating command
+    command = str('../dist/client '+str(serverAddress.get_text())+' '+str(syncMethod))
+
+    try:
+      # DEBUG command
+      print("TRY: "+command)
+
+      # Run command and save log
+      instantLog =  subprocess.check_output(command, shell=True)
+      os.system(instantLog+" >> server.log")
+
+      # GUI datetime output
+      out = builder.get_object("out")
+      out.set_text("Date and Time: "+instantLog.replace('\n', ''))
+    except Exception, e:
+      out = builder.get_object("out").set_text("'"+serverAddress.get_text()+"'is not a time server!")
+    
+
+
+  # Start Sync Thread
+  # =======================
+  try:
+    thread.start_new_thread( sync_request, (1,1) )
+  except Exception, errtxt:
+    print "ERROR Sync Thread: "
+    print errtxt
+                            
 
 # Event listiner for btnSyncNow
 btnSyncNow = builder.get_object("btnSyncNow")
 def on_btnSyncNow_clicked(self):
-  sync_time()
+
+  # NTP NOT IMPLEMENTED!
+  if builder.get_object("syncType").get_active() == 2:
+    builder.get_object("out").set_text("NTP not implemented yet!")
+    return 1
+
+  sync_time()  
 btnSyncNow.connect("clicked", on_btnSyncNow_clicked)
-
-
-
-
-
-
-
-# Test connection
-# ================================
-def check_ping():
-    hostname = "taylor"
-    response = os.system("ping -c 1 " + hostname)
-    # and then check the response...
-    if response == 0:
-        pingstatus = "Network Active"
-    else:
-        pingstatus = "Network Error"
-
-    return pingstatus
 
 
 

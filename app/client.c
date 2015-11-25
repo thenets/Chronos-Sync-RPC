@@ -97,12 +97,16 @@ int setTimeBasicMode () {
 
 int setTimeChristianMode () {
 	time_t rawtime;
+	int sec_before, sec_after;
 
 	// Getting local time before request
 	// ===========================================
 	struct tm * time_before_request;
 	time ( &rawtime );
 	time_before_request = localtime ( &rawtime );
+	sec_before 			= time_before_request->tm_sec;
+
+	// usleep(6500000); // DEBUG 1,5 second
 
 
 	// Getting time from server
@@ -111,12 +115,59 @@ int setTimeChristianMode () {
 	time_server = (struct tm *) malloc(sizeof(struct tm));
 	time_server = getTimeFromServer();
 
-
 	// Getting local time after request
 	// ===========================================
 	struct tm * time_after_request;
 	time ( &rawtime );
-	time_after_request = localtime ( &rawtime );
+	time_after_request 	= localtime ( &rawtime );
+	sec_after 			= time_after_request->tm_sec;
+
+
+	// Check if it's same minute before and
+	// after request. Try again if is equals.
+	// ===========================================
+	if (time_before_request->tm_min != time_after_request->tm_min) {
+		setTimeChristianMode ();
+		exit(0);
+	}
+
+
+	// Chistian Algorithm
+	// ===========================================
+		// Check drift rate in seconds
+		float drift_rate = ( (float)(sec_after - sec_before) )/2;
+
+		// Set time with drift rate fix
+		time_server->tm_sec = time_server->tm_sec + drift_rate;
+
+	
+
+	// Check if seconds is higher than 59
+	// Try again if is.
+	// ===========================================
+	if (time_server->tm_sec > 59) {
+		setTimeChristianMode ();
+		exit(0);
+	}
+
+
+	// Set time on local machine
+	// ===========================================
+	setTimeOnMachine(time_server);
+
+
+	// Console output:
+	// 		Server Timestamp
+	// ===========================================
+	printf("%s", asctime( time_server ) );
+
+
+
+	// DEBUG
+	//	printf("Second before    : %d\n", sec_before);
+	//	printf("Second after     : %d\n", sec_after);
+	//	printf("drift_rate float : %f\n", drift_rate);
+	//	printf("drift_rate int   : %d\n", (int)drift_rate);
 }
 
 
@@ -154,7 +205,7 @@ void setTimeOnMachine (struct tm * tm) {
 
 
 	// Executa comando externo e define data e hora usando "date"
-	printf("| Date/time setted to: \n");
+	//printf("| Date/time setted to: \n");
     char *name[] = {
         "/bin/bash",
         "-c",
