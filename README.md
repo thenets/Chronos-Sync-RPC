@@ -21,8 +21,11 @@ Run as root:
 ```
 
 ### 2.2. Running the client (command line)
-Run as root: "./dist/client <server_address> <method[0-2]>"
+Run as root:
+```
+"./dist/client <server_address> <method[0-2]>"
              @method: [0-Basic] [1-Christian] [2-NTP]
+```
 Example:
 ```
 $ ./dist/client 192.168.0.105 0
